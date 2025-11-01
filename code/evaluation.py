@@ -177,8 +177,7 @@ def main():
     parser.add_argument("--fingerprint_dim", type=int, default=250, help="Graph fingerprint dimension")
     parser.add_argument("--num_layers", type=int, default=5, help="Number of graph layers")
     parser.add_argument("--data_label", type=str, default="CHEMBL218_EC50", help="Dataset label")
-    parser.add_argument("--graph_model_path", type=str, required=True, help="Path to trained GraphSNN model file")
-    parser.add_argument("--ifm_model_path", type=str, required=True, help="Path to trained IFM model file")
+    parser.add_argument("--model_path", type=str, required=True, help="Path to trained model checkpoint (.pth)")
     parser.add_argument("--output_dir", type=str, default="../evaluation_results", help="Directory to save results")
     parser.add_argument("--eval_sets", type=str, nargs='+', default=['test', 'cliff'], 
                        help="Which sets to evaluate: test, cliff, or both")
@@ -205,10 +204,8 @@ def main():
         raise FileNotFoundError(f"Feature file not found: {feature_filename}")
     if not os.path.exists(finger_feature_path):
         raise FileNotFoundError(f"Fingerprint file not found: {finger_feature_path}")
-    if not os.path.exists(args.graph_model_path):
-        raise FileNotFoundError(f"Graph model file not found: {args.graph_model_path}")
-    if not os.path.exists(args.ifm_model_path):
-        raise FileNotFoundError(f"IFM model file not found: {args.ifm_model_path}")
+    if not os.path.exists(args.model_path):
+        raise FileNotFoundError(f"Model file not found: {args.model_path}")
     
     total_df = pd.read_csv(raw_filename)
     
@@ -260,19 +257,18 @@ def main():
     print("\nCreating model architecture...")
     model = create_model_components(args, finger_input_dim, default_paras).to(args.device)
     
-    # Load trained models separately
-    print(f"Loading GraphSNN model from: {args.graph_model_path}")
-    graph_checkpoint = torch.load(args.graph_model_path, map_location=args.device)
-    model.graph_model.load_state_dict(graph_checkpoint)
-    print("GraphSNN model loaded successfully!")
+    # Load trained model
+    print(f"Loading model from: {args.model_path}")
+    checkpoint = torch.load(args.model_path, map_location=args.device)
     
-    print(f"Loading IFM model from: {args.ifm_model_path}")
-    ifm_checkpoint = torch.load(args.ifm_model_path, map_location=args.device)
-    model.ifm_model.load_state_dict(ifm_checkpoint)
-    print("IFM model loaded successfully!")
+    # Handle different checkpoint formats
+    if 'model_state_dict' in checkpoint:
+        model.load_state_dict(checkpoint['model_state_dict'])
+    else:
+        model.load_state_dict(checkpoint)
     
     model.eval()
-    print("Both models loaded and set to evaluation mode!")
+    print("Model loaded successfully and set to evaluation mode!")
     
     # Create datasets and loaders
     datasets = {}

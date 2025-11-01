@@ -153,10 +153,8 @@ def main():
                        help="CSV file containing SMILES strings")
     parser.add_argument("--fingerprint_file", type=str, required=True,
                        help="CSV file with PaDEL fingerprints (use: java -jar PaDEL-Descriptor.jar -2d -fingerprints -dir <dir> -file <output>)")
-    parser.add_argument("--graph_model_path", type=str, required=True,
-                       help="Path to trained graph model (.pth)")
-    parser.add_argument("--ifm_model_path", type=str, required=True,
-                       help="Path to trained IFM model (.pth)")
+    parser.add_argument("--model_path", type=str, required=True,
+                       help="Path to trained model checkpoint (.pth)")
     
     # Optional arguments
     parser.add_argument("--smiles_column", type=str, default="smiles",
@@ -233,38 +231,19 @@ def main():
     }
     
     graph_model, ifm_model = create_model_components(args, finger_input_dim, default_paras)
+    model = End2EndModel(graph_model, ifm_model, args.fingerprint_dim).to(args.device)
     
-    # Load graph model
-    graph_checkpoint = torch.load(args.graph_model_path, map_location=args.device)
-    if isinstance(graph_checkpoint, dict) and 'graph_model' in graph_checkpoint:
-        graph_model.load_state_dict(graph_checkpoint['graph_model'])
+    # Load checkpoint
+    checkpoint = torch.load(args.model_path, map_location=args.device)
+    
+    # Handle different checkpoint formats
+    if 'model_state_dict' in checkpoint:
+        model.load_state_dict(checkpoint['model_state_dict'])
     else:
-        graph_state_dict = {}
-        for key, value in graph_checkpoint.items():
-            if key.startswith('graph_model.'):
-                graph_state_dict[key.replace('graph_model.', '')] = value
-        if graph_state_dict:
-            graph_model.load_state_dict(graph_state_dict)
-        else:
-            graph_model.load_state_dict(graph_checkpoint)
-    graph_model = graph_model.to(args.device).eval()
+        model.load_state_dict(checkpoint)
     
-    # Load IFM model
-    ifm_checkpoint = torch.load(args.ifm_model_path, map_location=args.device)
-    if isinstance(ifm_checkpoint, dict) and 'ifm_model' in ifm_checkpoint:
-        ifm_model.load_state_dict(ifm_checkpoint['ifm_model'])
-    else:
-        ifm_state_dict = {}
-        for key, value in ifm_checkpoint.items():
-            if key.startswith('ifm_model.'):
-                ifm_state_dict[key.replace('ifm_model.', '')] = value
-        if ifm_state_dict:
-            ifm_model.load_state_dict(ifm_state_dict)
-        else:
-            ifm_model.load_state_dict(ifm_checkpoint)
-    ifm_model = ifm_model.to(args.device).eval()
-    
-    model = End2EndModel(graph_model, ifm_model, args.fingerprint_dim).eval()
+    model.eval()
+    print("Model loaded successfully!")
     
     # Generate predictions
     print("Generating predictions...")
