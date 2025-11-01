@@ -37,3 +37,6 @@ python ./code/inference.py --smiles_file ./data/test.csv --fingerprint_file ./da
 
 ## Reproducibility
 Processed data and trained checkpoints: https://pan.quark.cn/s/11d8498e256b
+
+## MACE-R7 Dataset
+MACE-R7 is stored as a compressed file in the dataset folder. To train with MACE-R7, you need to use the corresponding dataset name and place the files in the appropriate path.
