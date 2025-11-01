@@ -22,21 +22,21 @@ For detailed data processing steps, please refer to the README file in the datas
 
 ## Train
 ```bash
-python ./code/end2end_train.py --data_label CHEMBL218_EC50 --device 0
+python ./code/end2end_train.py --data_label <dataset_name> --device 0
 ```
 
 ## Evaluation
 ```bash
-python ./code/evaluation.py --data_label CHEMBL218_EC50 --graph_model_path ./checkpoints/graph_model.pth --ifm_model_path ./checkpoints/ifm_model.pth --device 0
+python ./code/evaluation.py --data_label <dataset_name> --model_path <path_to_trained_model.pth> --device 0
 ```
 
 ## Inference
 ```bash
-python ./code/inference.py --smiles_file ./data/test.csv --fingerprint_file ./data/test_fingerprints.csv --graph_model_path ./checkpoints/graph_model.pth --ifm_model_path ./checkpoints/ifm_model.pth --output_file ./results/predictions.csv
+python ./code/inference.py --smiles_file <path_to_smiles.csv> --fingerprint_file <path_to_fingerprints.csv> --model_path <path_to_trained_model.pth> --output_file <output_path.csv>
 ```
 
 ## Reproducibility
 Processed data and trained checkpoints: https://pan.quark.cn/s/11d8498e256b
 
 ## MACE-R7 Dataset
-MACE-R7 is stored as a compressed file in the dataset folder. To train with MACE-R7, you need to use the corresponding dataset name, place the files in the appropriate path, and note that a predefined split is already included in the dataset.
+MACE-R7 is stored as a compressed file in the dataset folder. To train with MACE-R7, you need to use the corresponding dataset name and place the files in the appropriate path.
